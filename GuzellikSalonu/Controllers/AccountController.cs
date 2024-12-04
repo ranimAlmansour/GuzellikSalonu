@@ -33,9 +33,7 @@ namespace GuzellikSalonu.Controllers
         {
             if (ModelState.IsValid) 
             {
-                string md5Salt = _configuration.GetValue<string>("AppSettings:MD5Salt");
-                string saltedPassword = model.Password + md5Salt;
-                string hashedPassword = saltedPassword.MD5();
+                string hashedPassword = DoMD5HashedString(model.Password);
 
                 User user = _databaseContext.Users.SingleOrDefault(x => x.Username.ToLower() == model.Username.ToLower() && x.Password == hashedPassword);
                 if(user!=null)
@@ -69,6 +67,13 @@ namespace GuzellikSalonu.Controllers
             }
             return View(model);
         }
+        private string DoMD5HashedString(string s)
+        {
+            string md5Salt = _configuration.GetValue<string>("AppSettings:MD5Salt");
+            string salted = s + md5Salt;
+            string hashed = salted.MD5();
+            return hashed;
+        }
         [AllowAnonymous]
         public IActionResult Register()
         {
@@ -80,23 +85,24 @@ namespace GuzellikSalonu.Controllers
         {
             if (ModelState.IsValid)
             {
-                if(_databaseContext.Users.Any(x=>x.Username.ToLower()==model.Username.ToLower()))
+                if (_databaseContext.Users.Any(x => x.Username.ToLower() == model.Username.ToLower()))
                 {
-
                     ModelState.AddModelError(nameof(model.Username), "Username is already exists.");
                     View(model);
                 }
-                string md5Salt = _configuration.GetValue<string>("AppSettings:MD5Salt");
-                string saltedPassword = model.Password + md5Salt;
-                string hashedPassword = saltedPassword.MD5();
+
+                string hashedPassword = DoMD5HashedString(model.Password);
+
                 User user = new()
                 {
                     Username = model.Username,
                     Password = hashedPassword
                 };
+
                 _databaseContext.Users.Add(user);
                 int affectedRowCount = _databaseContext.SaveChanges();
-                if (affectedRowCount==0)
+
+                if (affectedRowCount == 0)
                 {
                     ModelState.AddModelError("", "User can not be added.");
                 }
@@ -109,13 +115,51 @@ namespace GuzellikSalonu.Controllers
         }
         public IActionResult Profile()
         {
+            ProfileInfoLoader();
             return View();
         }
-        [HttpPost]
-        public IActionResult ProfileChangeFullName( string fullname)
+        private void ProfileInfoLoader()
         {
-           
-            return View();
+            Guid userid = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            User user = _databaseContext.Users.SingleOrDefault(x => x.Id == userid);
+
+            ViewData["FullName"] = user.FullName;
+        }
+        [HttpPost]
+        public IActionResult ProfileChangeFullName([Required][StringLength(50)] string? fullname)
+        {
+            if (ModelState.IsValid)
+            {
+                Guid userid = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                User user = _databaseContext.Users.SingleOrDefault(x => x.Id == userid);
+
+                user.FullName = fullname;
+                _databaseContext.SaveChanges();
+
+                return RedirectToAction(nameof(Profile));
+            }
+
+            ProfileInfoLoader();
+            return View("Profile");
+        }
+        [HttpPost]
+        public IActionResult ProfileChangePassword([Required][MinLength(6)][MaxLength(16)] string? password)
+        {
+            if (ModelState.IsValid)
+            {
+                Guid userid = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                User user = _databaseContext.Users.SingleOrDefault(x => x.Id == userid);
+
+                string hashedPassword = DoMD5HashedString(password);
+
+                user.Password = hashedPassword;
+                _databaseContext.SaveChanges();
+
+                ViewData["result"] = "PasswordChanged";
+            }
+
+            ProfileInfoLoader();
+            return View("Profile");
         }
         public IActionResult Logout()
         {
