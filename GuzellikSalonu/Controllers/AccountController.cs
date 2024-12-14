@@ -124,6 +124,7 @@ namespace GuzellikSalonu.Controllers
             User user = _databaseContext.Users.SingleOrDefault(x => x.Id == userid);
 
             ViewData["FullName"] = user.FullName;
+            ViewData["ProfileImage"] = user.ProfileImageFileName;
         }
         [HttpPost]
         public IActionResult ProfileChangeFullName([Required][StringLength(50)] string? fullname)
@@ -156,6 +157,35 @@ namespace GuzellikSalonu.Controllers
                 _databaseContext.SaveChanges();
 
                 ViewData["result"] = "PasswordChanged";
+            }
+
+            ProfileInfoLoader();
+            return View("Profile");
+        }
+        [HttpPost]
+        public IActionResult ProfileChangeImage([Required] IFormFile file)
+        {
+            if (ModelState.IsValid)
+            {
+                Guid userid = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                User user = _databaseContext.Users.SingleOrDefault(x => x.Id == userid);
+
+                // p_guid.jpg
+                string fileName = $"p_{userid}.jpg";
+
+                //string fileName = $"p_{userid}.{file.ContentType.Split('/')[1]}";   // image/png   image/jpg
+
+                Stream stream = new FileStream($"wwwroot/uploads/{fileName}", FileMode.OpenOrCreate);
+
+                file.CopyTo(stream);
+
+                stream.Close();
+                stream.Dispose();
+
+                user.ProfileImageFileName = fileName;
+                _databaseContext.SaveChanges();
+
+                return RedirectToAction(nameof(Profile));
             }
 
             ProfileInfoLoader();

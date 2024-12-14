@@ -22,6 +22,9 @@ namespace GuzellikSalonu.Entities
         public bool Locked { get; set; }=false;
         public DateTime CreatedAt { get; set; }=DateTime.Now;
 
+        [StringLength(250)]
+        public string? ProfileImageFileName { get; set; } = "no-image.jpg";
+
         [Required]
         [StringLength(50)]
         public string Role { get; set; } = "user";

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using GuzellikSalonu.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Reflection;
 namespace GuzellikSalonu
 {
     public class Program
@@ -11,6 +12,7 @@ namespace GuzellikSalonu
 
             // Add services to the container.
             builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
             builder.Services.AddDbContext<DatabaseContext>(opts =>
             {
                 opts.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
