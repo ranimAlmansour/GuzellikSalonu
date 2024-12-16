@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using GuzellikSalonu.Models;
+using GuzellikSalonu.Entities;
 using Microsoft.AspNetCore.Mvc;
 using GuzellikSalonu.Entities;
 using GuzellikSalonu.Models;
 
-namespace GuzellikSalonu.Controllers
+namespace WebApplication99.Controllers
 {
     public class UserController : Controller
     {
@@ -24,10 +26,12 @@ namespace GuzellikSalonu.Controllers
 
             return View(users);
         }
+
         public IActionResult Create()
         {
             return View();
         }
+
         [HttpPost]
         public IActionResult Create(CreateUserModel model)
         {
@@ -47,7 +51,50 @@ namespace GuzellikSalonu.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            return View(model);
+        }
+
+        public IActionResult Edit(Guid id)
+        {
+            User user = _databaseContext.Users.Find(id);
+            EditUserModel model = _mapper.Map<EditUserModel>(user);
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult Edit(Guid id, EditUserModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                if (_databaseContext.Users.Any(x => x.Username.ToLower() == model.Username.ToLower() && x.Id != id))
+                {
+                    ModelState.AddModelError(nameof(model.Username), "Username is already exists.");
+                    return View(model);
+                }
+
+                User user = _databaseContext.Users.Find(id);
+
+                _mapper.Map(model, user);
+                _databaseContext.SaveChanges();
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(model);
+        }
+
+        public IActionResult Delete(Guid id)
+        {
+            User user = _databaseContext.Users.Find(id);
+
+            if (user != null)
+            {
+                _databaseContext.Users.Remove(user);
+                _databaseContext.SaveChanges();
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
-
 }

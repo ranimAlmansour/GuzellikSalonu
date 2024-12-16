@@ -10,7 +10,7 @@ namespace GuzellikSalonu
         {
             CreateMap<User, UserModel>().ReverseMap();
             CreateMap<User, CreateUserModel>().ReverseMap();
-            //CreateMap<User, EditUserModel>().ReverseMap();
+            CreateMap<User, EditUserModel>().ReverseMap();
         }
     }
 }

@@ -12,6 +12,7 @@ namespace GuzellikSalonu.Models
         public string? ProfileImageFileName { get; set; } = "no-image.jpg";
         public string Role { get; set; } = "user";
     }
+
     public class CreateUserModel
     {
         //[Display(Name ="Kullanıcı Adı", Prompt ="johndoe")]
